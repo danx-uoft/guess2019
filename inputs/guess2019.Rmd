@@ -1,0 +1,241 @@
+---
+title: "Age and Ideology Predict Misinformation Sharing Behavior"
+author: "Dan Xu"
+date: "12/14/2021"
+output: 
+  bookdown::pdf_document2
+abstract: |
+  This project is a replication of @guess2019less's article titled "[Less than you think: Prevalence and predictors of fake news dissemination on Facebook](https://www.science.org/doi/10.1126/sciadv.aau4586)". Through a three-wave panel survey, @guess2019less find that ideology and age are predictors of fake news sharing behavior. Specifically, they find that conservatives and social media users who are 65 years and older are more likely to share fake news on Facebook. I used binomial regression analysis to replicate their research, and my results show consistency with their findings. In addition, I find that ethnicity is also a predictor of fake news sharing behavior: Black people tend to share less fake news than white people do. However, it should be noted that this relationship is marginally significant (p< 0.1). 
+  
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message=FALSE, warning = FALSE}
+# load data
+# rm(list=ls())
+ load("gnt_replication_data.RData")
+```
+
+
+```{r echo = FALSE, message=FALSE, warning = FALSE}
+library(xtable)
+library(stargazer)
+library(ggplot2)
+library(tidyverse)
+library( MASS)
+```
+
+\newpage
+# Introduction 
+The pervasiveness of political misinformation has been threatening the foundations of electoral politics. Within the domain of political information research, misinformation has been suggested to promote politically aligned motivated belief among citizens [@flynn2017nature;@van2018partisan]. Untrustworthy websites, troll accounts, fake news, and conspiracy theories proliferate distorted and false narratives, which are detrimental to the integrity of the electoral process. With the growing reliance on social media, misinformation continues to thrive in online election campaigns, and it is thus increasingly difficult to trust the veracity of the news and information we consume on social media platforms. 
+
+What factors predict misinformation sharing behavior? To answer this question, @guess2019less used a representative online survey (N = 3500), which collected respondents’ Facebook sharing history to investigate the effects of fake news and misinformation during the 2016 presidential election. They find that conservatives are more likely to share fake news articles, and older social media users shared more fake news articles than the young age groups. However, they further note that fake news sharing behavior is rather rare on social media. This project is a replication of @guess2019less's article titled "[Less than you think: Prevalence and predictors of fake news dissemination on Facebook](https://www.science.org/doi/10.1126/sciadv.aau4586)." In the following sections, I used negative binomial regressions to replicate their research results and findings. 
+
+# Data and method
+@guess2019less designed and conducted a panel survey during the 2016 U.S. presidential election to examine the political shaping of social media use. The survey consists of three waves. Wave 1 was fielded between 9 April and 1 May 2016 (N = 3500), Wave 2 was fielded between 9 September and 9 October 2016 (N = 2635), and Wave 3 was fielded between 25 October and 7 November 2016 (N = 2628). The survey was fielded by the survey polling firm YouGov. 
+
+To further understand how social media use affects political behaviors, @guess2019less managed to obtain private Facebook profile data from a subset of the survey respondents. Those repsodents who agreed to provide their Facebook profile information were asked to access a Facebook web application, in which they were further asked to provide their behavioral information, including religious and political views, timeline posts and interactions. 1191 of survey respondents, approximately 44% of the three-wave sample, consented to provide their personal data. 
+
+# Results 
+
+## Distribution of news shares 
+
+```{r fig1, echo=FALSE, fig.cap=" Distribution of news shares by number of respondents",warning=FALSE,message=FALSE,fig.height=4, fig.pos="H"}
+## FIGURE 1
+dat %>% 
+  filter(party != "Other/Not sure") %>%
+  ggplot(aes(num_posts, fill = party))  + 
+  geom_histogram(bins = 50) +
+  scale_fill_manual("", values = c("blue","red","darkgray")) +
+  ggtitle("Distribution of News Shares") + ylab("Number of respondents") +
+  xlab("Number of web links shared") + theme(legend.position = "bottom", legend.title = element_blank()) + labs(title = NULL) +
+  theme_classic()
+
+```
+
+As shown in Figure \@ref(fig:fig1), the majority of people share less than 1000 web links, and Republicans tend to share the least amount of information on Facebook compared to Democrats and Independents. 
+
+```{r fig2, echo=FALSE, fig.cap=" Distribution of fake news shares by number of respondents",warning=FALSE,message=FALSE,fig.height=4, fig.pos="H"}
+dat %>% 
+  filter(party != "Other/Not sure") %>%
+  ggplot(aes(num_fake_shares, fill = party))  + 
+  scale_fill_manual("", values = c( "blue", "red"," darkgray")) +
+  geom_histogram(bins = 50) +
+  ggtitle("Distribution of Fake News Shares") + ylab("Number of respondents") +
+  xlab("Number of web links shared") + theme(legend.position = "bottom", legend.title = element_blank()) + labs(title = NULL) +
+  theme_classic()
+
+```
+
+Figure \@ref(fig:fig2) further illustrates the amount of fake news shared on Facebook. Suprisingly, people rarely share false content on Facebook, regardless of their political identity: of 1191 of survey respondents, about 80% of the respondents did not share fake news on Facebook, and less then 10% of them shared one fake news link/article on Facebook. Given the results, it is evident that sharing fake news on social media is a rare activity, as @guess2019less argue.
+
+
+## Modelling and analysis 
+According to @guess2019less, the number of shares in the data were aggregated to individual respondent level. Therefore, the independent variables are counts (i.e., number of fake news stories shared). As a result, they used quasi-Poisson regressions to model the determinants of Facebook sharing behavior. When compensating for overdispersion in count data, negative binomial regression models could be also used for modelling the number of shares on Facebook [@ver2007quasi]. Although Poisson regression modelling is widely used in count data analysis, it has certain limitations as it assumes a conditional Possion distribution of the outcome variable. In comparison with Poisson regression, negative binomial regression is more flexible in fitting count data as it allows the conditional variance of the outcome variable to be greater than its conditional mean [@lawless1987negative]. Demographic and political variables are predictors of the models; in other words, ideology, age, race, gender ,family income, and educational attainment are independent variables of the models. The model were tested using negative binomial regression specified as follows:
+
+
+$$
+Log(shares) = \beta_0 + \beta_1 ideology + \beta_2 age + \beta_3 sex + \beta_4 race + \beta_5 education + \beta_6 income + \beta_7 posts + \epsilon
+$$
+where "shares" refers to the number or counts of news shares. $\beta_0$ is the intercept, and $\beta_1$ to $\beta_7$ represent the paramaters of the negative binomial regression models. 
+
+Below, I present the results generated by negative binomial regressions, and compare them to those of quasi-Poisson regression models. 
+
+```{r models, echo = FALSE, message=FALSE, warning = FALSE}
+#table 1
+model.cp1a <- glm(num_fake_shares ~ ideology + age + female + black + educ + faminc, 
+                  weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+
+model.cp1a1 <- glm.nb(num_fake_shares ~ ideology + age + female + black + educ + faminc, 
+                  weights = weight_svypop_w3, data = dat)
+
+#table 2
+model.cp1 <- glm(num_fake_shares ~ ideology + age + female + black + educ + faminc + num_posts, 
+                 weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+
+model.cp11 <- glm.nb(num_fake_shares ~ ideology + age + female + black + educ + faminc + num_posts, 
+                 weights = weight_svypop_w3, data = dat)
+
+# # table 3
+# model.cp2a <- glm(num_fake_shares_ag ~ ideology + age + female + black + educ + faminc, 
+#                   weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+# 
+# model.cp2a1 <- glm.nb(num_fake_shares_ag ~ ideology + age + female + black + educ + faminc, 
+#                   weights = weight_svypop_w3, data = dat)
+# # table 4
+# model.cp2 <- glm(num_fake_shares_ag ~ ideology + age + female + black + educ + faminc + num_posts, 
+#                  weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+# 
+# model.cp21 <- glm.nb(num_fake_shares_ag ~ ideology + age + female + black + educ + faminc + num_posts, 
+#                  weights = weight_svypop_w3, data = dat)
+
+# explore interactiion terms 
+# interaction model1 1
+model.cp1a_int <- glm(num_fake_shares ~ as.numeric(ideology) + as.numeric(age) + female + black + educ + faminc + num_posts +  as.numeric(ideology) * as.numeric(age), 
+                  weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+
+model.cp1a1_int <- glm.nb(num_fake_shares ~ as.numeric(ideology) + as.numeric(age) + female + black + educ + faminc + num_posts +  as.numeric(ideology) * as.numeric(age), 
+                  weights = weight_svypop_w3, data = dat)
+
+# interaction model2 2
+
+model.cp1a_int1 <- glm(num_fake_shares ~ as.numeric(ideology) + as.numeric(age) + female + black + educ + faminc + num_posts + black * as.numeric(ideology) + black * as.numeric(age),  weights = weight_svypop_w3, data = dat, family = "quasipoisson")
+
+model.cp1a1_int1 <- glm.nb(num_fake_shares ~ as.numeric(ideology) + as.numeric(age) + female + black + educ + faminc + num_posts + black * as.numeric(ideology) + black * as.numeric(age), weights = weight_svypop_w3, data = dat)
+
+
+```
+
+
+```{r echo = FALSE, message=FALSE, warning = FALSE}
+
+varnames <- c("(Intercept)", "Very Liberal", "Liberal",
+              "Moderate", "Conservative", "Very Conservative", 
+              "Age: 30-44", "Age: 45-65", "Age: Over 65", "Female", "Black", 
+              "Education", "Income", "Number of links shared") 
+
+# interaction term included
+varnames1 <- c("(Intercept)", "Ideology (Conservative)", "Age (Old)", "Female", "Black", 
+              "Education", "Income", "Number of links shared","Ideology (Conservative) x Age (Old)") 
+
+```
+
+```{r table1, echo = FALSE, message=FALSE, results = 'asis', echo=FALSE, warning=FALSE}
+stargazer(model.cp1a1,model.cp1a,
+          header = FALSE,
+          type = "latex",
+          digits=2, 
+          label = "tab:table1",
+          # report = "vc*",
+          # column.labels = c("Negative binomial regression model","Quasi-Poisson regression model"),
+          style = "apsr",
+          # align = TRUE,   
+          title = "Determinants of Fake News Sharing on Facebook",
+          covariate.labels = c(varnames[c(-1,-14)]),
+          dep.var.labels = c("Number of Stories Shared", "Number of Stories Shared (A\\&G)"), 
+          keep.stat = c("n", "null.dev", "res.dev"), 
+          notes = "Negative binomial regression vs. Quasi-Poisson models.")
+```
+ 
+The results of the negative binomial and quasi-Poisson regression analyses are summarized in Table \ref{tab:table1}.Predictors, including political ideology, age, sex, ethnicity, and family income are included in both models. The results show significant positive effects of political ideology and age in both models, at p < 0.01; and marginally negative effect of ethnically background, at p < 0.1. This implies that conservatives and older people (age 65+) are more likely to share fake news websites.Black people are also less likely to share fake news, although this relationship is marginally significant. However, we do not find significance to indicate that educational attainment and family income predict fake news sharing behavior. 
+
+
+```{r table2, echo = FALSE, message=FALSE, results = 'asis', echo=FALSE, warning=FALSE}
+stargazer(model.cp11,model.cp1,
+          header = FALSE,
+          type = "latex",
+          digits=2, 
+          label = "tab:table2",
+          # report = "vc*",
+          # column.labels = c("Negative binomial regression model","Quasi-Poisson regression model"),
+          style = "apsr",
+          # align = TRUE,   
+          title = "Determinants of Fake News Sharing on Facebook",
+          covariate.labels = c(varnames[-1]),
+          dep.var.labels = c("Number of Stories Shared", "Number of Stories Shared (A\\&G)"), 
+          keep.stat = c("n", "null.dev", "res.dev"), 
+          notes = "Negative binomial regression vs. Quasi-Poisson models.")
+```
+ 
+Table \ref{tab:table2} reports the regression coefficients for each of the variables in the negative binomial and quasi-Poisson regressions, including "number of links shared" - which refers to the number of web links shared  by respondents. The variables "Conservative" and "Very Conservative" have a positive coefficient for both models, which is statistically significant at p < 0.01. This means that for each one-unit increase in constructiveness, the expected log count of the number of shares on Facebook increases by about 2.20. The indicator variable shown as "Age: Over 65" is the expected difference in log count between the age group 65 + and the reference group (prog=1), suggesting that age is a significant predictor of fake news sharing behavior. The variable "Number of links shared' is also significant at the level 0.001. Ethnicity is marginally significant in the negative binomial model at the level of 0.1. This implies that conservatives and older people are more likely to share fake news. Black people are reported to be less likely to share fake news at a marginally significant level. 
+
+```{r table3, echo = FALSE, message=FALSE, results = 'asis', echo=FALSE, warning=FALSE}
+stargazer(model.cp1a1_int,model.cp1a_int,
+          header = FALSE,
+          type = "latex",
+          # digits=2, 
+          # float = FALSE,
+          label = "tab:table3",
+          # report = "vc*",
+          # column.labels = c("Negative binomial regression model","Quasi-Poisson regression model"),
+          style = "apsr",
+          # align = TRUE,   
+          title = "Determinants of Fake News Sharing on Facebook",
+          covariate.labels = c(varnames1[-1]),
+          dep.var.labels = c("Number of Stories Shared", "Number of Stories Shared (A\\&G)"), 
+          keep.stat = c("n", "null.dev", "res.dev"), 
+          notes = "Negative binomial regression vs. Quasi-Poisson models.")
+```
+
+The replication results are consistent with @guess2019less's results. However, given that older respondents and conservatives tended to share fake news, it seems critical to re-examine the possible interaction effects between the variables age and ideology. To simplify the research, I re-coded the variables "ideology"  and "age" into numeric variables instead of categorical variables. According to the survey, on a scale of 1 - 5, respondents were asked to identify liberal political views as "very liberal", "liberal","moderate", "conservative", and "very conservative", therefore, the higher the "ideology" value, the more conservative the respondent. Similarly, the higher the "age" value, the older the respondent. 
+
+As shown in Table \ref{tab:table3}, ideology, age, sex, educational attainment, and the interaction term of "ideology x age" are not significant predictors of fake news sharing behavior. However, the number of links shared is still a significant predictor of fake news sharing behavior on Facebook, at the level of 0.01. Ethnicity is also reported to negatively associated with misinformation sharing behavior, at a significant level 0.05, even though this is only observed in the negative binomial model. 
+
+
+```{r table4, echo = FALSE, message=FALSE, results = 'asis', echo=FALSE, warning=FALSE}
+stargazer(model.cp1a1_int1,model.cp1a_int1,
+          header = FALSE,
+          type = "latex",
+          # digits=2, 
+          # float = FALSE,
+          label = "tab:table4",
+          # report = "vc*",
+          # column.labels = c("Negative binomial regression model","Quasi-Poisson regression model"),
+          style = "apsr",
+          # align = TRUE,   
+          title = "Determinants of Fake News Sharing on Facebook",
+          covariate.labels = c("Ideology (Conservative)", "Age (Old)", "Female", "Black", 
+              "Education", "Income", "Number of links shared","Ideology (Conservative) x Black", "Age (Old) x Black"),
+          dep.var.labels = c("Number of Stories Shared", "Number of Stories Shared (A\\&G)"), 
+          keep.stat = c("n", "null.dev", "res.dev"), 
+          notes = "Negative binomial regression vs. Quasi-Poisson models.")
+```
+
+Given that ethnicity/race appears to be a crucial predictor. I further included two interaction terms, namely "ideology x ethnicity", "age x ethnicity" in the regression models to examine the potential interaction effects obscured by other variables. In this case, ""ideology", "age", and "number of links shared" continue to show robust significance in both models, but the interaction terms do not show significant statistical relationship to fake news sharing behavior. See Table \ref{tab:table4} for details.
+
+# Discussion and conclusion
+
+The results of overall negative binomial regression and quasi-Poisson regression models indicate that the study is reproducible. As @guess2019less's finding are drawn on quasi-Poisson regression models, in order to replicate their results, I used binomial regression models, which share the same parameters as quasi-Poisson regression models, to explore the predictors of fake news sharing behavior. The results generated by negative binomial regression models are similar to those of quasi-Poisson regression models, suggesting that the data are not sensitive to model selection. 
+
+First of all, sharing fake news articles is a rare activity, which is consistent with @guess2019less's finding. The majority of Facebook users did not share any fake news articles during the 2016 U.S. presidential election. only less than 10% of the Facebook users reported sharing one fake news article. Second of all, I also find that conservatives are more likely to share fake news articles, which lends empirical support to the reliability of @guess2019less's research. Last but not least, age is found to be a predictor of fake news sharing behavior: people who are 65 years and older appear to share more fake news articles than the younger age groups, holding other variables constant. However, I would argue that arbitrarily dividing respondents into four age categories may not be the most optimal approach to examining the relationship between age and misinformation sharing behavior. Regression results could potentially change if we altered the categorization. For example, if the age groups were divided into "18-30", "31-40", "41-50", "51-60","61 and over", the regression models may generate different results. In fact, when the age variable was treated as a continuous variable (See Table \ref{tab:table3}), the variable was not significant.
+
+In the regression models, ethnicity/race appears to be a predictor of fake news sharing behavior. However, the variable was reported to be marginally significant only in the negative binomial regression models. As the results of the binomial regression models suggest, black people are less likely to share fake news articles. To further investigate the potential interaction effects that may have obscured the relationships between the covariates and dependent variables, I explored the interaction terms of "age" and "political ideology" and found no significant relationships to be reported. 
+
+A question that remains unanswered is whether social media users tend to not share fake news articles, or they merely tend to not share articles or information. The survey did not document how other types of fake news articles were shared by the respondents. In addition to that, were respondents able to identify what they shared was fake? This is another question that demands further investigation.   
+
+
+# References 
